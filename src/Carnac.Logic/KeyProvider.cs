@@ -8,10 +8,12 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Carnac.Logic.KeyMonitor;
 using Carnac.Logic.Models;
+using Carnac.Logic.MouseMonitor;
 using Microsoft.Win32;
 using System.Windows.Media;
 using SettingsProviderNet;
 using System.Text.RegularExpressions;
+
 
 namespace Carnac.Logic
 {
@@ -96,7 +98,10 @@ namespace Carnac.Logic
                         winKeyPressed = false;
                 }, observer.OnError);
 
-                var keyStreamSubsription = interceptKeysSource.GetKeyStream()
+                var keyStreamSubsription = Observable.Merge(
+                    new IObservable<InterceptKeyEventArgs>[2] {
+                        interceptKeysSource.GetKeyStream(),
+                        InterceptMouse.Current.GetKeyStream() })
                     .Select(DetectWindowsKey)
                     .Where(k => !IsModifierKeyPress(k) && k.KeyDirection == KeyDirection.Down)
                     .Select(ToCarnacKeyPress)
